@@ -1,0 +1,89 @@
+---
+title: "run_analysis"
+author: "shradheya"
+date: "3/31/2020"
+output: html_document
+---
+
+# Starting with loading "dplyr.
+
+```{r}
+#Load library
+
+library(dplyr)
+```
+
+# Loading data.
+
+```{r}
+#Reading train set using read.table function because it is a tabular data.
+
+train_x <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/train/X_train.txt")
+train_y <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/train/y_train.txt")
+train_sub <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/train/subject_train.txt") 
+
+#Reading test set using read.table function because it is a tabular data.
+
+test_x <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/test/X_test.txt")
+test_y <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/test/y_test.txt")
+test_sub <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/test/subject_test.txt")
+
+# Reading activity lables
+
+active_lable <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/activity_labels.txt")
+
+# Reading features
+
+features <- read.table("getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/features.txt")
+
+```
+
+# Merging train, test and, subject data [train_x with test_x], [train_y with test_y] and [train_sub with test_sub].
+
+```{r}
+# Merging x
+merge_x <- rbind(train_x, test_x)
+
+# Merging y
+merge_y <- rbind(train_y, test_y)
+
+# Merging subjects
+merge_sub <- rbind(train_sub, test_sub)
+```
+
+# Selecting all  the "mean" and "std" from "features" 
+
+```{r}
+features_selected <- features[grep("mean|std",features[,2]),]
+merge_x <- merge_x[,features_selected[,1]]
+```
+
+# Nameing activities in the merged data by descriptive activity name.
+
+```{r}
+colnames(merge_y) <- "label"
+merge_y$activity <- factor(merge_y$label, labels = as.character(active_lable[,2]))
+activity <- merge_y$activity
+```
+
+# Labeling the data with descriptive variable names.
+
+```{r}
+colnames(merge_x) <- features[features_selected[,1],2]
+```
+
+
+# From the data set in above step, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+
+```{r}
+colnames(merge_sub) <- "subject"
+combine <- cbind(merge_x, activity, merge_sub)
+temp <- group_by(combine,activity, subject)
+final <- summarize_all(temp,funs(mean))
+```
+
+# Writing tidy data "tidy_data.txt"
+
+```{r}
+write.table(final, file = "./tidy_data.txt", row.names = FALSE, col.names = TRUE)
+```
